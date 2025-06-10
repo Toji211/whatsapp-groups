@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,12 +12,36 @@
     <p>Explora o comparte grupos por categoría</p>
   </header>
 
+  <!-- Formulario debajo del título -->
+  <section id="formulario">
+    <h2>📤 Publicar Grupo de WhatsApp</h2>
+    <form id="grupoForm">
+      <label for="nombre">Nombre del grupo:</label>
+      <input type="text" id="nombre" name="nombre" required>
+
+      <label for="link">Link del grupo:</label>
+      <input type="url" id="link" name="link" placeholder="https://chat.whatsapp.com/..." required>
+
+      <label for="categoria">Categoría del grupo:</label>
+      <select id="categoria" name="categoria" required>
+        <option value="">-- Selecciona una categoría --</option>
+        <option value="anime">Anime</option>
+        <option value="juegos">Juegos</option>
+        <option value="películas">Películas</option>
+        <option value="series">Series</option>
+        <option value="tecnología">Tecnología</option>
+      </select>
+
+      <button type="submit">Enviar grupo</button>
+    </form>
+    <p id="mensajeExito" style="display:none; color:green;">✅ Grupo enviado correctamente.</p>
+  </section>
+
   <nav>
     <button class="category-btn" data-category="todos">Todos</button>
     <button class="category-btn" data-category="anime">Anime</button>
     <button class="category-btn" data-category="películas">Películas</button>
     <button class="category-btn" data-category="series">Series</button>
-    <!-- puedes agregar más botones de categoría -->
   </nav>
 
   <main id="group-container">
