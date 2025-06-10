@@ -1,11 +1,12 @@
-// Configuración de Firebase (reemplaza con tus credenciales)
+// Configuración de Firebase
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_MESSAGING_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyCuqZbnBvkLoTe3IvjAf7B7U7UaCY9Y2OY",
+  authDomain: "whatsappgroups-13fa6.firebaseapp.com",
+  projectId: "whatsappgroups-13fa6",
+  storageBucket: "whatsappgroups-13fa6.firebasestorage.app",
+  messagingSenderId: "773986686362",
+  appId: "1:773986686362:web:3130e9e0c459d4a3039623",
+  measurementId: "G-Y1R2WT3VV2"
 };
 
 // Inicializar Firebase
@@ -57,9 +58,13 @@ function inicializarCategorias() {
 
 // Inicializar grupos (vacío inicialmente)
 async function inicializarGrupos() {
-  const gruposSnapshot = await db.collection('grupos').get();
-  if (!gruposSnapshot.empty) {
-    mostrarGrupos();
+  try {
+    const gruposSnapshot = await db.collection('grupos').get();
+    if (!gruposSnapshot.empty) {
+      mostrarGrupos();
+    }
+  } catch (error) {
+    console.error('Error al inicializar grupos:', error);
   }
 }
 
@@ -71,7 +76,7 @@ document.getElementById('toggleForm').addEventListener('click', () => {
 });
 
 // Validar enlace de WhatsApp (solo grupos)
-function validarEnlaceWhatsApp(link) {
+function validateWhatsAppLink(link) {
   const regex = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{22}$/;
   return regex.test(link);
 }
@@ -87,7 +92,8 @@ document.getElementById('grupoForm').addEventListener('submit', async function (
   const ownerId = generarOwnerId();
 
   const errorMessage = document.getElementById('mensajeError');
-  if (!validarEnlaceWhatsApp(link)) {
+  if (!validateWhatsAppLink(link)) {
+    errorMessage.textContent = 'Por favor, ingresa un enlace válido de WhatsApp.';
     errorMessage.style.display = 'block';
     return;
   } else {
@@ -105,23 +111,29 @@ document.getElementById('grupoForm').addEventListener('submit', async function (
     reportes: 0
   };
 
-  // Guardar en Firestore
-  const docRef = await db.collection('grupos').add(nuevoGrupo);
+  try {
+    // Guardar en Firestore
+    const docRef = await db.collection('grupos').add(nuevoGrupo);
 
-  // Mostrar mensaje de éxito con ID
-  document.getElementById('grupoForm').reset();
-  document.getElementById('mensajeExito').textContent = `✅ Grupo enviado correctamente. Tu ID para borrarlo: ${ownerId}`;
-  document.getElementById('mensajeExito').style.display = 'block';
-  setTimeout(() => {
-    document.getElementById('mensajeExito').style.display = 'none';
-    document.getElementById('mensajeExito').textContent = '✅ Grupo enviado correctamente.';
-  }, 5000);
+    // Mostrar mensaje de éxito con ID
+    document.getElementById('grupoForm').reset();
+    document.getElementById('mensajeExito').textContent = `✅ Grupo enviado correctamente. Tu ID para borrarlo: ${ownerId}`;
+    document.getElementById('mensajeExito').style.display = 'block';
+    setTimeout(() => {
+      document.getElementById('mensajeExito').style.display = 'none';
+      document.getElementById('mensajeExito').textContent = '✅ Grupo enviado correctamente.';
+    }, 5000);
 
-  // Actualizar la lista de grupos
-  mostrarGrupos();
+    // Actualizar la lista de grupos
+    mostrarGrupos();
 
-  // Ocultar el formulario
-  document.getElementById('formulario').classList.remove('active');
+    // Ocultar el formulario
+    document.getElementById('formulario').classList.remove('active');
+  } catch (error) {
+    console.error('Error al guardar grupo:', error);
+    errorMessage.textContent = 'Error al guardar el grupo. Intenta de nuevo.';
+    errorMessage.style.display = 'block';
+  }
 });
 
 // Mostrar grupos
@@ -129,66 +141,84 @@ async function mostrarGrupos(categoriaSeleccionada = 'todos') {
   const container = document.getElementById('group-container');
   container.innerHTML = '';
 
-  const query = categoriaSeleccionada === 'todos'
-    ? db.collection('grupos').orderBy('fecha', 'desc')
-    : db.collection('grupos').where('categoria', '==', categoriaSeleccionada).orderBy('fecha', 'desc');
+  try {
+    const query = categoriaSeleccionada === 'todos'
+      ? db.collection('grupos').orderBy('fecha', 'desc')
+      : db.collection('grupos').where('categoria', '==', categoriaSeleccionada).orderBy('fecha', 'desc');
 
-  const snapshot = await query.get();
-  if (snapshot.empty) {
-    container.innerHTML = '<p>No hay grupos disponibles en esta categoría.</p>';
-    return;
+    const snapshot = await query.get();
+    if (snapshot.empty) {
+      container.innerHTML = '<p>No hay grupos disponibles en esta categoría.</p>';
+      return;
+    }
+
+    snapshot.forEach(doc => {
+      const g = doc.data();
+      const card = document.createElement('div');
+      card.className = 'group-card';
+      card.innerHTML = `
+        <h3>${g.nombre}</h3>
+        <p><strong>Categoría:</strong> ${categorias.find(cat => cat.value === g.categoria)?.label || g.categoria}</p>
+        <p>${g.descripcion}</p>
+        <a href="${g.link}" target="_blank">Unirse</a>
+        <div class="action-buttons">
+          <button class="action-button report-btn" data-id="${doc.id}">Reportar</button>
+          <button class="action-button delete-btn" data-id="${doc.id}" data-owner="${g.ownerId}">Borrar</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    // Eventos para reportar
+    document.querySelectorAll('.report-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const docId = btn.dataset.id;
+        const docRef = db.collection('grupos').doc(docId);
+        try {
+          const doc = await docRef.get();
+          if (!doc.exists) return;
+          const reportes = (doc.data().reportes || 0) + 1;
+
+          if (reportes >= 5) {
+            await docRef.delete();
+          } else {
+            await docRef.update({ reportes });
+          }
+          mostrarGrupos(categoriaSeleccionada);
+        } catch (error) {
+          console.error('Error al reportar grupo:', error);
+        }
+      });
+    });
+
+    // Eventos para borrar
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const docId = btn.dataset.id;
+        const ownerId = btn.dataset.owner;
+        const userInput = prompt('Ingresa el ID de propietario para borrar este grupo:');
+        if (userInput === ownerId) {
+          try {
+            await db.collection('grupos').doc(docId).delete();
+            mostrarGrupos(categoriaSeleccionada);
+          } catch (error) {
+            console.error('Error al borrar grupo:', error);
+            alert('Error al borrar el grupo.');
+          }
+        } else {
+          alert('ID de propietario incorrecto.');
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error al mostrar grupos:', error);
+    container.innerHTML = '<p>Error al cargar los grupos. Intenta recargar la página.</p>';
   }
-
-  snapshot.forEach(doc => {
-    const g = doc.data();
-    const card = document.createElement('div');
-    card.className = 'group-card';
-    card.innerHTML = `
-      <h3>${g.nombre}</h3>
-      <p><strong>Categoría:</strong> ${categorias.find(cat => cat.value === g.categoria)?.label || g.categoria}</p>
-      <p>${g.descripcion}</p>
-      <a href="${g.link}" target="_blank">Unirse</a>
-      <div class="action-buttons">
-        <button class="action-button report-btn" data-id="${doc.id}">Reportar</button>
-        <button class="action-button delete-btn" data-id="${doc.id}" data-owner="${g.ownerId}">Borrar</button>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-
-  // Eventos para reportar y borrar
-  document.querySelectorAll('.report-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const docId = btn.dataset.id;
-      const docRef = db.collection('grupos').doc(docId);
-      const doc = await docRef.get();
-      const reportes = (doc.data().reportes || 0) + 1;
-
-      if (reportes >= 5) {
-        await docRef.delete();
-      } else {
-        await docRef.update({ reportes });
-      }
-      mostrarGrupos(categoriaSeleccionada);
-    });
-  });
-
-  document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const docId = btn.dataset.id;
-      const ownerId = btn.dataset.owner;
-      const userInput = prompt('Ingresa el ID de propietario para borrar este grupo:');
-      if (userInput === ownerId) {
-        await db.collection('grupos').doc(docId).delete();
-        mostrarGrupos(categoriaSeleccionada);
-      } else {
-        alert('ID de propietario incorrecto.');
-      }
-    });
-  });
 }
 
 // Inicializar al cargar la página
-inicializarCategorias();
-inicializarGrupos();
-mostrarGrupos();
+document.addEventListener('DOMContentLoaded', () => {
+  inicializarCategorias();
+  inicializarGrupos();
+  mostrarGrupos();
+});
