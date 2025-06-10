@@ -12,7 +12,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Generar ID único para el usuario (basado en timestamp y aleatorio)
+// Generar ID único para el usuario
 function generarOwnerId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
@@ -55,7 +55,7 @@ function inicializarCategorias() {
   });
 }
 
-// Inicializar grupos en Firestore (vacío inicialmente)
+// Inicializar grupos (vacío inicialmente)
 async function inicializarGrupos() {
   const gruposSnapshot = await db.collection('grupos').get();
   if (!gruposSnapshot.empty) {
@@ -66,8 +66,8 @@ async function inicializarGrupos() {
 // Alternar visibilidad del formulario
 document.getElementById('toggleForm').addEventListener('click', () => {
   const formulario = document.getElementById('formulario');
-  console.log('Botón toggleForm clicado, display actual:', formulario.style.display);
-  formulario.style.display = formulario.style.display === 'none' ? 'block' : 'none';
+  console.log('Botón toggleForm clicado, clase actual:', formulario.classList.contains('active'));
+  formulario.classList.toggle('active');
 });
 
 // Validar enlace de WhatsApp (solo grupos)
@@ -108,7 +108,7 @@ document.getElementById('grupoForm').addEventListener('submit', async function (
   // Guardar en Firestore
   const docRef = await db.collection('grupos').add(nuevoGrupo);
 
-  // Mostrar mensaje de éxito con ID para borrado
+  // Mostrar mensaje de éxito con ID
   document.getElementById('grupoForm').reset();
   document.getElementById('mensajeExito').textContent = `✅ Grupo enviado correctamente. Tu ID para borrarlo: ${ownerId}`;
   document.getElementById('mensajeExito').style.display = 'block';
@@ -121,7 +121,7 @@ document.getElementById('grupoForm').addEventListener('submit', async function (
   mostrarGrupos();
 
   // Ocultar el formulario
-  document.getElementById('formulario').style.display = 'none';
+  document.getElementById('formulario').classList.remove('active');
 });
 
 // Mostrar grupos
