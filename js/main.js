@@ -12,17 +12,21 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// Generar ID único para el usuario (basado en timestamp y aleatorio)
+function generarOwnerId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
 // Array de categorías
 const categorias = [
   { value: 'anime', label: 'Anime', defaultDesc: '¡Únete para hablar sobre tus animes favoritos!' },
   { value: 'juegos', label: 'Juegos', defaultDesc: 'Grupo para gamers y discusiones sobre videojuegos.' },
   { value: 'películas', label: 'Películas', defaultDesc: 'Comparte y descubre películas de todos los géneros.' },
   { value: 'series', label: 'Series', defaultDesc: 'Hablamos de las mejores series y estrenos.' },
-  { value: 'tecnología', label: 'Tecnología', defaultDesc: 'Discusiones sobre gadgets, software y más.' },
-  { value: 'canales', label: 'Canales', defaultDesc: 'Sigue los mejores canales de WhatsApp.' }
+  { value: 'tecnología', label: 'Tecnología', defaultDesc: 'Discusiones sobre gadgets, software y más.' }
 ];
 
-// Inicializar categorías en el formulario y navegación
+// Inicializar categorías
 function inicializarCategorias() {
   const selectCategoria = document.getElementById('categoria');
   selectCategoria.innerHTML = '<option value="">-- Selecciona una categoría --</option>';
@@ -51,22 +55,11 @@ function inicializarCategorias() {
   });
 }
 
-// Inicializar grupos en Firestore si la colección está vacía
+// Inicializar grupos en Firestore (vacío inicialmente)
 async function inicializarGrupos() {
   const gruposSnapshot = await db.collection('grupos').get();
-  if (gruposSnapshot.empty) {
-    const gruposIniciales = [
-      {
-        nombre: 'Canal Promocional',
-        link: 'https://whatsapp.com/channel/0029VbB1yMR9Gv7MgOU8t50U',
-        descripcion: 'Sigue nuestro canal para promociones y contenido exclusivo.',
-        categoria: 'canales',
-        fecha: new Date().toISOString()
-      }
-    ];
-    gruposIniciales.forEach(async grupo => {
-      await db.collection('grupos').add(grupo);
-    });
+  if (!gruposSnapshot.empty) {
+    mostrarGrupos();
   }
 }
 
@@ -77,9 +70,9 @@ document.getElementById('toggleForm').addEventListener('click', () => {
   formulario.style.display = formulario.style.display === 'none' ? 'block' : 'none';
 });
 
-// Validar enlace de WhatsApp (grupos o canales)
+// Validar enlace de WhatsApp (solo grupos)
 function validarEnlaceWhatsApp(link) {
-  const regex = /^(https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{22}|https:\/\/whatsapp\.com\/channel\/[A-Za-z0-9]{24})$/;
+  const regex = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]{22}$/;
   return regex.test(link);
 }
 
@@ -91,6 +84,7 @@ document.getElementById('grupoForm').addEventListener('submit', async function (
   const link = document.getElementById('link').value.trim();
   const descripcion = document.getElementById('descripcion').value.trim();
   const categoria = document.getElementById('categoria').value;
+  const ownerId = generarOwnerId();
 
   const errorMessage = document.getElementById('mensajeError');
   if (!validarEnlaceWhatsApp(link)) {
@@ -106,18 +100,22 @@ document.getElementById('grupoForm').addEventListener('submit', async function (
     link,
     descripcion: descripcion || defaultDesc,
     categoria,
-    fecha: new Date().toISOString()
+    fecha: new Date().toISOString(),
+    ownerId,
+    reportes: 0
   };
 
   // Guardar en Firestore
-  await db.collection('grupos').add(nuevoGrupo);
+  const docRef = await db.collection('grupos').add(nuevoGrupo);
 
-  // Mostrar mensaje de éxito
+  // Mostrar mensaje de éxito con ID para borrado
   document.getElementById('grupoForm').reset();
+  document.getElementById('mensajeExito').textContent = `✅ Grupo enviado correctamente. Tu ID para borrarlo: ${ownerId}`;
   document.getElementById('mensajeExito').style.display = 'block';
   setTimeout(() => {
     document.getElementById('mensajeExito').style.display = 'none';
-  }, 3000);
+    document.getElementById('mensajeExito').textContent = '✅ Grupo enviado correctamente.';
+  }, 5000);
 
   // Actualizar la lista de grupos
   mostrarGrupos();
@@ -137,7 +135,7 @@ async function mostrarGrupos(categoriaSeleccionada = 'todos') {
 
   const snapshot = await query.get();
   if (snapshot.empty) {
-    container.innerHTML = '<p>No hay grupos o canales disponibles en esta categoría.</p>';
+    container.innerHTML = '<p>No hay grupos disponibles en esta categoría.</p>';
     return;
   }
 
@@ -150,8 +148,43 @@ async function mostrarGrupos(categoriaSeleccionada = 'todos') {
       <p><strong>Categoría:</strong> ${categorias.find(cat => cat.value === g.categoria)?.label || g.categoria}</p>
       <p>${g.descripcion}</p>
       <a href="${g.link}" target="_blank">Unirse</a>
+      <div class="action-buttons">
+        <button class="action-button report-btn" data-id="${doc.id}">Reportar</button>
+        <button class="action-button delete-btn" data-id="${doc.id}" data-owner="${g.ownerId}">Borrar</button>
+      </div>
     `;
     container.appendChild(card);
+  });
+
+  // Eventos para reportar y borrar
+  document.querySelectorAll('.report-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const docId = btn.dataset.id;
+      const docRef = db.collection('grupos').doc(docId);
+      const doc = await docRef.get();
+      const reportes = (doc.data().reportes || 0) + 1;
+
+      if (reportes >= 5) {
+        await docRef.delete();
+      } else {
+        await docRef.update({ reportes });
+      }
+      mostrarGrupos(categoriaSeleccionada);
+    });
+  });
+
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const docId = btn.dataset.id;
+      const ownerId = btn.dataset.owner;
+      const userInput = prompt('Ingresa el ID de propietario para borrar este grupo:');
+      if (userInput === ownerId) {
+        await db.collection('grupos').doc(docId).delete();
+        mostrarGrupos(categoriaSeleccionada);
+      } else {
+        alert('ID de propietario incorrecto.');
+      }
+    });
   });
 }
 

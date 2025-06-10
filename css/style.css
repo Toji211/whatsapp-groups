@@ -12,11 +12,6 @@ body {
 
 header {
   padding: 2rem 1rem;
-  background: linear-gradient(90deg, #39ff14, #00fff7);
-  -webkit-background-clip: text;
-  color: transparent;
-  font-size: 2rem;
-  text-shadow: 0 0 10px #39ff14;
 }
 
 .header-logo {
@@ -24,6 +19,38 @@ header {
   margin: 0 auto 1rem;
   display: block;
   filter: drop-shadow(0 0 5px #39ff14);
+}
+
+h1 {
+  background: linear-gradient(90deg, #39ff14, #00fff7);
+  -webkit-background-clip: text;
+  color: transparent;
+  font-size: 2rem;
+  text-shadow: 0 0 10px #39ff14;
+}
+
+.contact-section {
+  margin-top: 1rem;
+}
+
+.contact-section h3 {
+  color: #39ff14;
+  font-size: 1.2rem;
+}
+
+.contact-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #111;
+  border: 1px solid #00fff7;
+  color: #00fff7;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+.contact-link:hover {
+  background-color: #00fff7;
+  color: #000;
 }
 
 nav {
@@ -78,6 +105,26 @@ main {
 }
 .group-card a:hover {
   background-color: #00fff7;
+  color: #000;
+}
+
+.group-card .action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.group-card .action-button {
+  background-color: #111;
+  border: 1px solid #ff4444;
+  color: #ff4444;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.group-card .action-button:hover {
+  background-color: #ff4444;
   color: #000;
 }
 
@@ -204,6 +251,10 @@ footer {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .contact-section {
+    font-size: 0.9rem;
   }
 }
 
