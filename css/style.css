@@ -61,3 +61,102 @@ footer {
   color: #666;
   font-size: 0.9rem;
 }
+
+/* Estilos para el formulario desplegable */
+.form-toggle-container {
+  margin: 1rem;
+}
+
+.form-container {
+  background-color: #111;
+  border: 1px solid #39ff14;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem auto;
+  max-width: 500px;
+  box-shadow: 0 0 10px #39ff14;
+  transition: all 0.3s ease;
+}
+
+#formulario h2 {
+  background: linear-gradient(90deg, #39ff14, #00fff7);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 10px #39ff14;
+  margin-bottom: 1rem;
+}
+
+#grupoForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#grupoForm label {
+  text-align: left;
+  color: #39ff14;
+}
+
+#grupoForm input,
+#grupoForm select {
+  background-color: #222;
+  border: 1px solid #39ff14;
+  color: #eee;
+  padding: 0.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+#grupoForm button {
+  background-color: #111;
+  border: 1px solid #39ff14;
+  color: #39ff14;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#grupoForm button:hover {
+  background-color: #39ff14;
+  color: #000;
+}
+
+/* Animación para el desplegable */
+#formulario {
+  transition: all 0.3s ease;
+}
+
+/* Responsividad */
+@media (max-width: 600px) {
+  header {
+    font-size: 1.5rem;
+    padding: 1.5rem 0.5rem;
+  }
+
+  .form-container {
+    margin: 0.5rem;
+    padding: 1rem;
+    max-width: 100%;
+  }
+
+  main {
+    grid-template-columns: 1fr;
+    padding: 0.5rem;
+  }
+
+  .group-card {
+    margin: 0.5rem;
+  }
+
+  .category-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  #grupoForm input,
+  #grupoForm select,
+  #grupoForm button {
+    font-size: 0.9rem;
+  }
+}

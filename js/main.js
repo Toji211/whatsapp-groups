@@ -1,3 +1,9 @@
+// Alternar visibilidad del formulario
+document.getElementById('toggleForm').addEventListener('click', () => {
+  const formulario = document.getElementById('formulario');
+  formulario.style.display = formulario.style.display === 'none' ? 'block' : 'none';
+});
+
 // Manejo del formulario
 document.getElementById('grupoForm').addEventListener('submit', function (e) {
   e.preventDefault();
@@ -33,6 +39,9 @@ document.getElementById('grupoForm').addEventListener('submit', function (e) {
 
   // Actualizar la lista de grupos
   mostrarGrupos();
+
+  // Ocultar el formulario tras enviar
+  document.getElementById('formulario').style.display = 'none';
 });
 
 // Función para mostrar grupos
