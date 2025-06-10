@@ -12,6 +12,7 @@ const firebaseConfig = {
 // Inicializar Firebase
 try {
   firebase.initializeApp(firebaseConfig);
+  console.log('Firebase inicializado correctamente');
 } catch (error) {
   console.error('Error al inicializar Firebase:', error);
 }
@@ -33,6 +34,7 @@ const categorias = [
 
 // Inicializar categorías
 function inicializarCategorias() {
+  console.log('Inicializando categorías...');
   try {
     const selectCategoria = document.getElementById('categoria');
     if (!selectCategoria) {
@@ -46,6 +48,7 @@ function inicializarCategorias() {
       option.textContent = cat.label;
       selectCategoria.appendChild(option);
     });
+    console.log('Categorías añadidas al select:', categorias.map(cat => cat.label));
 
     const nav = document.querySelector('nav');
     if (!nav) {
@@ -64,6 +67,7 @@ function inicializarCategorias() {
     document.querySelectorAll('.category-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const categoria = btn.dataset.category;
+        console.log('Categoría seleccionada:', categoria);
         mostrarGrupos(categoria);
       });
     });
@@ -74,10 +78,13 @@ function inicializarCategorias() {
 
 // Inicializar grupos
 async function inicializarGrupos() {
+  console.log('Inicializando grupos...');
   try {
     const gruposSnapshot = await db.collection('grupos').get();
     if (!gruposSnapshot.empty) {
       mostrarGrupos();
+    } else {
+      console.log('No hay grupos en Firestore');
     }
   } catch (error) {
     console.error('Error al inicializar grupos:', error);
@@ -86,20 +93,32 @@ async function inicializarGrupos() {
 
 // Alternar visibilidad del formulario
 function toggleFormulario() {
+  console.log('Ejecutando toggleFormulario');
   const formulario = document.getElementById('formulario');
   if (!formulario) {
     console.error('Elemento #formulario no encontrado');
     return;
   }
-  console.log('Botón toggleForm clicado, clase actual:', formulario.classList.contains('active'));
+  const isActive = formulario.classList.contains('active');
+  console.log('Formulario activo:', isActive);
   formulario.classList.toggle('active');
 }
 
-try {
-  document.getElementById('toggleForm').addEventListener('click', toggleFormulario);
-} catch (error) {
-  console.error('Error al añadir evento toggleForm:', error);
-}
+// Añadir evento toggleForm
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM cargado');
+  try {
+    const toggleButton = document.getElementById('toggleForm');
+    if (!toggleButton) {
+      console.error('Elemento #toggleForm no encontrado');
+      return;
+    }
+    toggleButton.addEventListener('click', toggleFormulario);
+    console.log('Evento toggleForm añadido');
+  } catch (error) {
+    console.error('Error al añadir evento toggleForm:', error);
+  }
+});
 
 // Validar enlace de WhatsApp (solo grupos)
 function validateWhatsAppLink(link) {
@@ -108,66 +127,80 @@ function validateWhatsAppLink(link) {
 }
 
 // Manejo del formulario
-try {
-  document.getElementById('grupoForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
-
-    const nombre = document.getElementById('nombre').value.trim();
-    const link = document.getElementById('link').value.trim();
-    const descripcion = document.getElementById('descripcion').value.trim();
-    const categoria = document.getElementById('categoria').value;
-    const ownerId = generarOwnerId();
-
-    const errorMessage = document.getElementById('mensajeError');
-    if (!validateWhatsAppLink(link)) {
-      errorMessage.textContent = 'Por favor, ingresa un enlace válido de WhatsApp.';
-      errorMessage.style.display = 'block';
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const grupoForm = document.getElementById('grupoForm');
+    if (!grupoForm) {
+      console.error('Elemento #grupoForm no encontrado');
       return;
-    } else {
-      errorMessage.style.display = 'none';
     }
+    grupoForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      console.log('Formulario enviado');
 
-    const defaultDesc = categorias.find(cat => cat.value === categoria)?.defaultDesc || 'Sin descripción.';
-    const nuevoGrupo = {
-      nombre,
-      link,
-      descripcion: descripcion || defaultDesc,
-      categoria,
-      fecha: new Date().toISOString(),
-      ownerId,
-      reportes: 0
-    };
+      const nombre = document.getElementById('nombre').value.trim();
+      const link = document.getElementById('link').value.trim();
+      const descripcion = document.getElementById('descripcion').value.trim();
+      const categoria = document.getElementById('categoria').value;
+      const ownerId = generarOwnerId();
 
-    try {
-      // Guardar en Firestore
-      const docRef = await db.collection('grupos').add(nuevoGrupo);
+      const errorMessage = document.getElementById('mensajeError');
+      if (!validateWhatsAppLink(link)) {
+        errorMessage.textContent = 'Por favor, ingresa un enlace válido de WhatsApp.';
+        errorMessage.style.display = 'block';
+        return;
+      } else {
+        errorMessage.style.display = 'none';
+      }
 
-      // Mostrar mensaje de éxito con ID
-      document.getElementById('grupoForm').reset();
-      document.getElementById('mensajeExito').textContent = `✅ Grupo enviado correctamente. Tu ID para borrarlo: ${ownerId}`;
-      document.getElementById('mensajeExito').style.display = 'block';
-      setTimeout(() => {
-        document.getElementById('mensajeExito').style.display = 'none';
-        document.getElementById('mensajeExito').textContent = '✅ Grupo enviado correctamente.';
-      }, 5000);
+      const defaultDesc = categorias.find(cat => cat.value === categoria)?.defaultDesc || 'Sin descripción.';
+      const nuevoGrupo = {
+        nombre,
+        link,
+        descripcion: descripcion || defaultDesc,
+        categoria,
+        fecha: new Date().toISOString(),
+        ownerId,
+        reportes: 0
+      };
 
-      // Actualizar la lista de grupos
-      mostrarGrupos();
+      try {
+        const docRef = await db.collection('grupos').add(nuevoGrupo);
+        console.log('Grupo guardado con ID:', docRef.id);
 
-      // Ocultar el formulario
-      document.getElementById('formulario').classList.remove('active');
-    } catch (error) {
-      console.error('Error al guardar grupo:', error);
-      errorMessage.textContent = 'Error al guardar el grupo. Intenta de nuevo.';
-      errorMessage.style.display = 'block';
-    }
-  });
-} catch (error) {
-  console.error('Error al añadir evento grupoForm:', error);
-}
+        document.getElementById('grupoForm').reset();
+        document.getElementById('mensajeExito').textContent = `✅ Grupo enviado correctamente. Tu ID para borrarlo: ${ownerId}`;
+        document.getElementById('mensajeExito').style.display = 'block';
+        setTimeout(() => {
+          document.getElementById('mensajeExito').style.display = 'none';
+          document.getElementById('mensajeExito').textContent = '✅ Grupo enviado correctamente.';
+        }, 5000);
+
+        mostrarGrupos();
+        document.getElementById('formulario').classList.remove('active');
+      } catch (error) {
+        console.error('Error al guardar grupo:', error);
+        errorMessage.textContent = 'Error al guardar el grupo. Intenta de nuevo.';
+        errorMessage.style.display = 'block';
+      }
+    });
+  } catch (error) {
+    console.error('Error al añadir evento grupoForm:', error);
+  }
+
+  // Inicializar categorías y grupos
+  try {
+    inicializarCategorias();
+    inicializarGrupos();
+    mostrarGrupos();
+  } catch (error) {
+    console.error('Error al inicializar página:', error);
+  }
+});
 
 // Mostrar grupos
 async function mostrarGrupos(categoriaSeleccionada = 'todos') {
+  console.log('Mostrando grupos, categoría:', categoriaSeleccionada);
   const container = document.getElementById('group-container');
   if (!container) {
     console.error('Elemento #group-container no encontrado');
@@ -197,7 +230,7 @@ async function mostrarGrupos(categoriaSeleccionada = 'todos') {
         <a href="${g.link}" target="_blank">Unirse</a>
         <div class="action-buttons">
           <button class="action-button report-btn" data-id="${doc.id}">Reportar</button>
-          <button class="action-button delete-btn" data-id="${doc.id}" data-owner="${g.ownerId}">Borrar</button>
+          <button class="action-button" data-action="delete" data-id="${doc.id}" data-owner="${g.ownerId}">Eliminar</button>
         </div>
       `;
       container.appendChild(card);
@@ -213,10 +246,12 @@ async function mostrarGrupos(categoriaSeleccionada = 'todos') {
           if (!doc.exists) return;
           const reportes = (doc.data().reportes || 0) + 1;
 
-          if (reportes >= 5) {
+          if (reportes >= 6) {
             await docRef.delete();
+            console.log('Grupo eliminado por reportes:', docId);
           } else {
             await docRef.update({ reportes });
+            console.log('Reporte añadido, total:', reportes);
           }
           mostrarGrupos(categoriaSeleccionada);
         } catch (error) {
@@ -226,7 +261,7 @@ async function mostrarGrupos(categoriaSeleccionada = 'todos') {
     });
 
     // Eventos para borrar
-    document.querySelectorAll('.delete-btn').forEach(btn => {
+    document.querySelectorAll('[data-action="delete"]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const docId = btn.dataset.id;
         const ownerId = btn.dataset.owner;
@@ -234,6 +269,7 @@ async function mostrarGrupos(categoriaSeleccionada = 'todos') {
         if (userInput === ownerId) {
           try {
             await db.collection('grupos').doc(docId).delete();
+            console.log('Grupo eliminado por propietario:', docId);
             mostrarGrupos(categoriaSeleccionada);
           } catch (error) {
             console.error('Error al borrar grupo:', error);
@@ -246,17 +282,6 @@ async function mostrarGrupos(categoriaSeleccionada = 'todos') {
     });
   } catch (error) {
     console.error('Error al mostrar grupos:', error);
-    container.innerHTML = '<p>Error al cargar los grupos. Intenta recargar la página.</p>';
+    container.innerHTML = '<p>Error al cargar grupos. Intenta recargar la página.</p>';
   }
 }
-
-// Inicializar al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
-  try {
-    inicializarCategorias();
-    inicializarGrupos();
-    mostrarGrupos();
-  } catch (error) {
-    console.error('Error al inicializar página:', error);
-  }
-});
