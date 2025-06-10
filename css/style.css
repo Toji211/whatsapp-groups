@@ -19,6 +19,13 @@ header {
   text-shadow: 0 0 10px #39ff14;
 }
 
+.header-logo {
+  max-width: 150px;
+  margin: 0 auto 1rem;
+  display: block;
+  filter: drop-shadow(0 0 5px #39ff14);
+}
+
 nav {
   margin: 1rem;
 }
@@ -64,7 +71,7 @@ main {
   padding: 0.5rem 1rem;
   background-color: #111;
   border: 1px solid #00fff7;
-  color: #00fff7; /* Cambiado a cian neon para mejor contraste */
+  color: #00fff7;
   text-decoration: none;
   border-radius: 8px;
   transition: 0.3s;
@@ -160,6 +167,10 @@ footer {
   header {
     font-size: 1.5rem;
     padding: 1.5rem 0.5rem;
+  }
+
+  .header-logo {
+    max-width: 100px;
   }
 
   .form-container {

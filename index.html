@@ -11,35 +11,36 @@
 </head>
 <body>
   <header>
+    <img src="images/logo.png" alt="Logo Grupos de WhatsApp" class="header-logo" />
     <h1>🌐 Grupos de WhatsApp</h1>
-    <p>Explora o comparte grupos por categoría</p>
+    <p>Explora o comparte grupos y canales por categoría</p>
   </header>
 
   <div class="form-toggle-container">
-    <button id="toggleForm" class="category-btn">📤 Publicar Grupo</button>
+    <button id="toggleForm" class="category-btn">📤 Publicar Grupo o Canal</button>
   </div>
 
   <section id="formulario" style="display: none;">
     <div class="form-container">
-      <h2>📤 Publicar Grupo de WhatsApp</h2>
+      <h2>📤 Publicar Grupo o Canal de WhatsApp</h2>
       <form id="grupoForm">
-        <label for="nombre">Nombre del grupo:</label>
+        <label for="nombre">Nombre del grupo o canal:</label>
         <input type="text" id="nombre" name="nombre" required>
 
-        <label for="link">Link del grupo:</label>
-        <input type="url" id="link" name="link" placeholder="https://chat.whatsapp.com/..." required>
+        <label for="link">Link del grupo o canal:</label>
+        <input type="url" id="link" name="link" placeholder="https://chat.whatsapp.com/... o https://whatsapp.com/channel/..." required>
 
         <label for="descripcion">Descripción (opcional):</label>
         <textarea id="descripcion" name="descripcion" rows="4"></textarea>
 
-        <label for="categoria">Categoría del grupo:</label>
+        <label for="categoria">Categoría:</label>
         <select id="categoria" name="categoria" required>
           <option value="">-- Selecciona una categoría --</option>
         </select>
 
-        <button type="submit">Enviar grupo</button>
+        <button type="submit">Enviar</button>
       </form>
-      <p id="mensajeExito" style="display:none; color:#39ff14;">✅ Grupo enviado correctamente.</p>
+      <p id="mensajeExito" style="display:none; color:#39ff14;">✅ Enviado correctamente.</p>
       <p id="mensajeError" class="error-message" style="display:none;">Por favor, ingresa un enlace válido de WhatsApp.</p>
     </div>
   </section>
