@@ -52,6 +52,7 @@ main {
   border-radius: 12px;
   box-shadow: 0 0 10px #39ff14;
   transition: transform 0.3s ease;
+  transform: translateZ(0);
 }
 .group-card:hover {
   transform: scale(1.03);
@@ -62,14 +63,14 @@ main {
   margin-top: 0.5rem;
   padding: 0.5rem 1rem;
   background-color: #111;
-  border: 1px solid #39ff14;
-  color: #39ff14;
+  border: 1px solid #00fff7;
+  color: #00fff7; /* Cambiado a cian neon para mejor contraste */
   text-decoration: none;
   border-radius: 8px;
   transition: 0.3s;
 }
 .group-card a:hover {
-  background-color: #39ff14;
+  background-color: #00fff7;
   color: #000;
 }
 
@@ -80,7 +81,6 @@ footer {
   font-size: 0.9rem;
 }
 
-/* Estilos para el formulario desplegable */
 .form-toggle-container {
   margin: 1rem;
 }
@@ -116,13 +116,19 @@ footer {
 }
 
 #grupoForm input,
-#grupoForm select {
+#grupoForm select,
+#grupoForm textarea {
   background-color: #222;
   border: 1px solid #39ff14;
   color: #eee;
   padding: 0.5rem;
   border-radius: 8px;
   font-size: 1rem;
+}
+
+#grupoForm textarea {
+  resize: vertical;
+  min-height: 60px;
 }
 
 #grupoForm button {
@@ -140,19 +146,16 @@ footer {
   color: #000;
 }
 
-/* Animación para el desplegable */
 #formulario {
   transition: all 0.3s ease;
 }
 
-/* Mensaje de error */
 .error-message {
   color: #ff4444;
   display: none;
   margin-top: 0.5rem;
 }
 
-/* Responsividad */
 @media (max-width: 600px) {
   header {
     font-size: 1.5rem;
@@ -181,6 +184,7 @@ footer {
 
   #grupoForm input,
   #grupoForm select,
+  #grupoForm textarea,
   #grupoForm button {
     font-size: 0.9rem;
   }
@@ -192,7 +196,6 @@ footer {
   }
 }
 
-/* Ajustes para problemas de renderización */
 html {
   font-size: 16px;
   overflow-x: hidden;

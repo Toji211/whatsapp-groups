@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grupos de WhatsApp</title>
   <link rel="stylesheet" href="css/style.css" />
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js"></script>
 </head>
 <body>
   <header>
@@ -12,12 +15,10 @@
     <p>Explora o comparte grupos por categoría</p>
   </header>
 
-  <!-- Botón para desplegar el formulario -->
   <div class="form-toggle-container">
     <button id="toggleForm" class="category-btn">📤 Publicar Grupo</button>
   </div>
 
-  <!-- Formulario (inicialmente oculto) -->
   <section id="formulario" style="display: none;">
     <div class="form-container">
       <h2>📤 Publicar Grupo de WhatsApp</h2>
@@ -28,21 +29,23 @@
         <label for="link">Link del grupo:</label>
         <input type="url" id="link" name="link" placeholder="https://chat.whatsapp.com/..." required>
 
+        <label for="descripcion">Descripción (opcional):</label>
+        <textarea id="descripcion" name="descripcion" rows="4"></textarea>
+
         <label for="categoria">Categoría del grupo:</label>
         <select id="categoria" name="categoria" required>
           <option value="">-- Selecciona una categoría --</option>
-          <!-- Las categorías se llenarán dinámicamente desde JavaScript -->
         </select>
 
         <button type="submit">Enviar grupo</button>
       </form>
       <p id="mensajeExito" style="display:none; color:#39ff14;">✅ Grupo enviado correctamente.</p>
+      <p id="mensajeError" class="error-message" style="display:none;">Por favor, ingresa un enlace válido de WhatsApp.</p>
     </div>
   </section>
 
   <nav>
     <button class="category-btn" data-category="todos">Todos</button>
-    <!-- Los botones de categoría se llenarán dinámicamente desde JavaScript -->
   </nav>
 
   <main id="group-container">

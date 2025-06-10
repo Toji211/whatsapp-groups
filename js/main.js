@@ -1,11 +1,24 @@
-// Array de categorías (fácil de modificar)
+// Configuración de Firebase (reemplaza con tus credenciales)
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_AUTH_DOMAIN",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_STORAGE_BUCKET",
+  messagingSenderId: "TU_MESSAGING_SENDER_ID",
+  appId: "TU_APP_ID"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Array de categorías
 const categorias = [
-  { value: 'anime', label: 'Anime' },
-  { value: 'juegos', label: 'Juegos' },
-  { value: 'películas', label: 'Películas' },
-  { value: 'series', label: 'Series' },
-  { value: 'tecnología', label: 'Tecnología' }
-  // Agrega más categorías aquí, e.g., { value: 'música', label: 'Música' }
+  { value: 'anime', label: 'Anime', defaultDesc: '¡Únete para hablar sobre tus animes favoritos!' },
+  { value: 'juegos', label: 'Juegos', defaultDesc: 'Grupo para gamers y discusiones sobre videojuegos.' },
+  { value: 'películas', label: 'Películas', defaultDesc: 'Comparte y descubre películas de todos los géneros.' },
+  { value: 'series', label: 'Series', defaultDesc: 'Hablamos de las mejores series y estrenos.' },
+  { value: 'tecnología', label: 'Tecnología', defaultDesc: 'Discusiones sobre gadgets, software y más.' }
 ];
 
 // Inicializar categorías en el formulario y navegación
@@ -29,7 +42,6 @@ function inicializarCategorias() {
     nav.appendChild(btn);
   });
 
-  // Agregar eventos a los botones de categoría
   document.querySelectorAll('.category-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const categoria = btn.dataset.category;
@@ -38,31 +50,36 @@ function inicializarCategorias() {
   });
 }
 
-// Inicializar localStorage con grupos reales si está vacío
-function inicializarGrupos() {
-  const gruposIniciales = [
-    {
-      nombre: 'Fans de Anime',
-      link: 'https://chat.whatsapp.com/DoPDjATFCDmHIMtvkEeYFS',
-      categoria: 'anime',
-      fecha: new Date().toISOString()
-    },
-    {
-      nombre: 'Cine y Series',
-      link: 'https://chat.whatsapp.com/LZxDKiBxU6ICxBRyr61Iv9',
-      categoria: 'series',
-      fecha: new Date().toISOString()
-    }
-  ];
-
-  if (!localStorage.getItem('grupos')) {
-    localStorage.setItem('grupos', JSON.stringify(gruposIniciales));
+// Inicializar grupos en Firestore si la colección está vacía
+async function inicializarGrupos() {
+  const gruposSnapshot = await db.collection('grupos').get();
+  if (gruposSnapshot.empty) {
+    const gruposIniciales = [
+      {
+        nombre: 'Grupo de Anime Placeholder', // Reemplaza con el nombre real
+        link: 'https://chat.whatsapp.com/DoPDjATFCDmHIMtvkEeYFS',
+        descripcion: '¡Únete para hablar sobre tus animes favoritos!',
+        categoria: 'anime',
+        fecha: new Date().toISOString()
+      },
+      {
+        nombre: 'Grupo de Series Placeholder', // Reemplaza con el nombre real
+        link: 'https://chat.whatsapp.com/LZxDKiBxU6ICxBRyr61Iv9',
+        descripcion: 'Hablamos de las mejores series y estrenos.',
+        categoria: 'series',
+        fecha: new Date().toISOString()
+      }
+    ];
+    gruposIniciales.forEach(async grupo => {
+      await db.collection('grupos').add(grupo);
+    });
   }
 }
 
 // Alternar visibilidad del formulario
 document.getElementById('toggleForm').addEventListener('click', () => {
   const formulario = document.getElementById('formulario');
+  console.log('Botón toggleForm clicado, display actual:', formulario.style.display);
   formulario.style.display = formulario.style.display === 'none' ? 'block' : 'none';
 });
 
@@ -73,42 +90,33 @@ function validarEnlaceWhatsApp(link) {
 }
 
 // Manejo del formulario
-document.getElementById('grupoForm').addEventListener('submit', function (e) {
+document.getElementById('grupoForm').addEventListener('submit', async function (e) {
   e.preventDefault();
 
   const nombre = document.getElementById('nombre').value.trim();
   const link = document.getElementById('link').value.trim();
+  const descripcion = document.getElementById('descripcion').value.trim();
   const categoria = document.getElementById('categoria').value;
 
-  // Mostrar mensaje de error si existe
-  let errorMessage = document.getElementById('mensajeError');
-  if (!errorMessage) {
-    errorMessage = document.createElement('p');
-    errorMessage.id = 'mensajeError';
-    errorMessage.className = 'error-message';
-    document.getElementById('grupoForm').after(errorMessage);
-  }
-
-  // Validación del enlace
+  const errorMessage = document.getElementById('mensajeError');
   if (!validarEnlaceWhatsApp(link)) {
-    errorMessage.textContent = 'Por favor, ingresa un enlace válido de WhatsApp.';
     errorMessage.style.display = 'block';
     return;
   } else {
     errorMessage.style.display = 'none';
   }
 
+  const defaultDesc = categorias.find(cat => cat.value === categoria)?.defaultDesc || 'Grupo sin descripción.';
   const nuevoGrupo = {
     nombre,
     link,
+    descripcion: descripcion || defaultDesc,
     categoria,
     fecha: new Date().toISOString()
   };
 
-  // Guardar en localStorage
-  const grupos = JSON.parse(localStorage.getItem('grupos') || '[]');
-  grupos.push(nuevoGrupo);
-  localStorage.setItem('grupos', JSON.stringify(grupos));
+  // Guardar en Firestore
+  await db.collection('grupos').add(nuevoGrupo);
 
   // Mostrar mensaje de éxito
   document.getElementById('grupoForm').reset();
@@ -120,32 +128,33 @@ document.getElementById('grupoForm').addEventListener('submit', function (e) {
   // Actualizar la lista de grupos
   mostrarGrupos();
 
-  // Ocultar el formulario tras enviar
+  // Ocultar el formulario
   document.getElementById('formulario').style.display = 'none';
 });
 
-// Función para mostrar grupos
-function mostrarGrupos(categoriaSeleccionada = 'todos') {
+// Mostrar grupos
+async function mostrarGrupos(categoriaSeleccionada = 'todos') {
   const container = document.getElementById('group-container');
-  const grupos = JSON.parse(localStorage.getItem('grupos') || '[]');
-
   container.innerHTML = '';
 
-  const filtrados = categoriaSeleccionada === 'todos'
-    ? grupos
-    : grupos.filter(g => g.categoria === categoriaSeleccionada);
+  const query = categoriaSeleccionada === 'todos'
+    ? db.collection('grupos').orderBy('fecha', 'desc')
+    : db.collection('grupos').where('categoria', '==', categoriaSeleccionada).orderBy('fecha', 'desc');
 
-  if (filtrados.length === 0) {
+  const snapshot = await query.get();
+  if (snapshot.empty) {
     container.innerHTML = '<p>No hay grupos disponibles en esta categoría.</p>';
     return;
   }
 
-  filtrados.forEach(g => {
+  snapshot.forEach(doc => {
+    const g = doc.data();
     const card = document.createElement('div');
     card.className = 'group-card';
     card.innerHTML = `
       <h3>${g.nombre}</h3>
       <p><strong>Categoría:</strong> ${categorias.find(cat => cat.value === g.categoria)?.label || g.categoria}</p>
+      <p>${g.descripcion}</p>
       <a href="${g.link}" target="_blank">Unirse al grupo</a>
     `;
     container.appendChild(card);
